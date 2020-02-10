@@ -1,0 +1,108 @@
+doctype html
+html(lang='en')
+  head
+    meta(name='viewport', content='width=device-width, initial-scale=1.0, user-scalable=yes')
+    meta(charset='utf-8')
+    title Dashboardr
+    link(rel='stylesheet', href='style/main.css')
+    link(rel='stylesheet', href='style/hoq.css')
+    // Manifest
+    link(rel='manifest', href='manifest.json')
+    // Chrome for Android theme color
+    meta(name='theme-color', content='#90a8b2')
+    // Add to homescreen for Chrome on Android
+    meta(name='mobile-web-app-capable', content='yes')
+    meta(name='application-name', content='PSK')
+    link(rel='icon', sizes='192x192', href='images/touch/icon-192x192.png')
+    // Add to homescreen for Safari on iOS
+    meta(name='apple-mobile-web-app-capable', content='yes')
+    meta(name='apple-mobile-web-app-status-bar-style', content='black')
+    meta(name='apple-mobile-web-app-title', content='Polymer Starter Kit')
+    link(rel='apple-touch-icon', href='images/touch/icon-192x192.png')
+    // Tile for Win8
+    meta(name='msapplication-TileColor', content='#90a8b2')
+    meta(name='msapplication-TileImage', content='images/touch/icon-192x192.png')
+  body
+    include ./inc/nav.jade
+    script.
+      var categoryId = "#{categoryId}";
+    main
+      h1
+        span#categoryName
+      canvas#canvas(width='800', height='300')
+      table#houseTable
+        tbody
+          tr#specifications
+            td.controlPanel(colspan='2')
+              h1(style='margin:0px 0px 20px 0px') Legend
+              div(style='width:160px;display:inline-block;vertical-align:top')
+                h3(style='margin:0;min-height:45px') Interrelationships matrix
+                div(style='text-align:left')
+                  div(style='display:inline-block;width:40px;height:40px;align:center;vertical-align:middle;')
+                    img(src='images/table/strong-positive.png', width='40' height='40')
+                  div(style='display:inline-block;width:120px;vertical-align: middle;')
+                    | Strong positive
+                div(style='text-align:left')
+                  div(style='display:inline-block;width:40px;height:40px;align:center;vertical-align:middle;')
+                    img(src='images/table/positive.png', width='40' height='40')
+                  div(style='display:inline-block;width:120px;vertical-align: middle;')
+                    | Positive
+                div(style='text-align:left')
+                  div(style='display:inline-block;width:40px;height:40px;align:center;vertical-align:middle;')
+                    img(src='images/table/strong-negative.png', width='40' height='40')
+                  div(style='display:inline-block;width:120px;vertical-align: middle;')
+                    | Strong negative
+                div(style='text-align:left')
+                  div(style='display:inline-block;width:40px;height:40px;align:center;vertical-align:middle;')
+                    img(src='images/table/negative.png', width='40' height='40')
+                  div(style='display:inline-block;width:120px;vertical-align: middle;')
+                    | Negative
+              div(style='width:160px;display:inline-block;vertical-align:top')
+                h3(style='margin:0;min-height:45px') Relationships matrix
+                div(style='text-align:left')
+                  div(style='display:inline-block;width:40px;height:40px;align:center;vertical-align:middle;')
+                    img(src='images/table/strong.png', width='40' height='40')
+                  div(style='display:inline-block;width:120px;vertical-align: middle;')
+                    | Strong(9)
+                div(style='text-align:left')
+                  div(style='display:inline-block;width:40px;height:40px;align:center;vertical-align:middle;')
+                    img(src='images/table/fair.png', width='40' height='40')
+                  div(style='display:inline-block;width:120px;vertical-align: middle;')
+                    | Fair(3)
+                div(style='text-align:left')
+                  div(style='display:inline-block;width:40px;height:40px;align:center;vertical-align:middle;')
+                    img(src='images/table/weak.png', width='40' height='40')
+                  div(style='display:inline-block;width:120px;vertical-align: middle;')
+                    | Weak(1)
+              div(style='width:160px;display:inline-block;vertical-align:top')
+                h3(style='margin:0;min-height:45px') Min/Max
+                div(style='text-align:left')
+                  div(style='display:inline-block;width:40px;height:40px;align:center;vertical-align:middle;')
+                    img(src='images/table/neutral.png', width='40' height='40')
+                  div(style='display:inline-block;width:120px;vertical-align: middle;')
+                    | Neutral
+                div(style='text-align:left')
+                  div(style='display:inline-block;width:40px;height:40px;align:center;vertical-align:middle;')
+                    img(src='images/table/arrow-up.png', width='40' height='40')
+                  div(style='display:inline-block;width:120px;vertical-align: middle;')
+                    | Maximize
+                div(style='text-align:left')
+                  div(style='display:inline-block;width:40px;height:40px;align:center;vertical-align:middle;')
+                    img(src='images/table/arrow-down.png', width='40' height='40')
+                  div(style='display:inline-block;width:120px;vertical-align: middle;')
+                    | Minimize
+            td.controlPanel(colspan='5')
+              input#product-0.productInput(type='text' placeholder='Product 1')
+              input#product-1.productInput(type='text' placeholder='Product 2')
+              input#product-2.productInput(type='text' placeholder='Product 3')
+              input#product-3.productInput(type='text' placeholder='Product 4')
+              input#product-4.productInput(type='text' placeholder='Product 5')
+          tr#minMax
+          tr#targets
+            td.hidden(colspan='2')
+            td.hidden(colspan='2')
+          tr#importanceValue
+          tr#importanceWeight
+    script(src='js/idb-promised.js')
+    // <script src="js/main.js"></script>
+    script(src='js/hoq.js')
