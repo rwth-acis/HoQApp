@@ -1,0 +1,2 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["about"],{"6b78":function(t,e,n){"use strict";n.r(e);var s=function(){var t=this,e=t.$createElement;t._self._c;return t._m(0)},c=[function(){var t=this,e=t.$createElement,n=t._self._c||e;return n("div",{staticClass:"login"},[n("h1",[t._v("Login successful.")])])}],u={created:function(){this.$router.push("/my-projects")}},r=u,i=n("2877"),l=Object(i["a"])(r,s,c,!1,null,null,null);e["default"]=l.exports}}]);
+//# sourceMappingURL=about.36f2e11e.js.map
