@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2> Projects </h2>
+    <h2> {{ categoryName }} </h2>
     <p id="alertBox">{{ error }}</p>
     <canvas id="canvas" width='800' height='600' v-on:click="clickCanvas"></canvas>
     <table id="houseTable">
@@ -141,6 +141,7 @@ export default {
   name: 'ProjectsComponent',
   data () {
     return {
+      categoryName: '',
       error: '',
       authorized: false,
       activeUser: null,
@@ -191,6 +192,7 @@ export default {
         });
       }
     }
+    this.categoryName = await this.getCategoryNameLocally();
     // REQUIREMENTS
     try {
       this.requirements = await PostService.getAllRequirements(this.categoryId);
@@ -955,6 +957,26 @@ export default {
               authorizedCategories.push(cursor.value.value);
             }
             cursor.continue();
+          }
+        };
+      });
+    },
+    async getCategoryNameLocally(){
+      return new Promise((resolve, reject) => {
+        let trans = this.idb.transaction(['categories'],'readonly');
+        trans.oncomplete = e => {
+          resolve(categoryName);
+        };
+        let store = trans.objectStore('categories');
+        let categoryName = '';
+        store.openCursor().onsuccess = e => {
+          let cursor = e.target.result;
+          if (cursor) {
+            if(cursor.key == this.categoryId){
+              categoryName = cursor.value.value.name;
+            } else {
+              cursor.continue();
+            }
           }
         };
       });
