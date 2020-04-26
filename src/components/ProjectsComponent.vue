@@ -1,7 +1,6 @@
 <template>
   <div>
     <h2> Projects </h2>
-    <p class="error" v-if="error">{{ error }}</p>
     <table id="projectsTable">
       <tr>
         <th>Name</th>
@@ -10,7 +9,6 @@
         <th>Created</th>
         <th>Last Updated</th>
         <th>Followers</th>
-        <th>Following</th>
         <th>Actions</th>
       </tr>
       <tr v-for="(project, index) in displayedProjects">
@@ -20,7 +18,6 @@
         <td>{{ project.created }}</td>
         <td>{{ project.lastUpdated }}</td>
         <td>{{ project.numberOfFollowers }}</td>
-        <td>{{ project.following }}</td>
         <td>
           <router-link v-if="project.numberOfCategories > 0" :to="'/categories/' + project.id">To Categories</router-link>
           <span v-else>To Categories</span>
@@ -54,7 +51,6 @@ export default {
     return {
       idb: null,
       projects: [],
-      error: '',
       page: 1,
       perPage: 25,
       pages: [],
@@ -64,6 +60,7 @@ export default {
 
   },
   async mounted(){
+    document.title = "Explore Projects";
     this.idb = await this.getDb();
     try {
       this.projects = await PostService.getAllProjects();
@@ -155,6 +152,7 @@ export default {
           let requirementsStore = db.createObjectStore('requirements', {keyPath: 'key'});
           let specificationsStore = db.createObjectStore('specifications', {keyPath: 'key'});
           let productsStore = db.createObjectStore('products', {keyPath: 'key'});
+          let authorizedCategoriesStore = db.createObjectStore('authorizedCategories', {keyPath: 'key'});
         };
       });
     },

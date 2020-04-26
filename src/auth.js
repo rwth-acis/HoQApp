@@ -11,6 +11,7 @@ var mainOidc = createOidcAuth(
   {
     authority: 'https://api.learning-layers.eu/o/oauth2/',
     client_id: 'bd080f23-433c-417e-b21a-b9a96846c9d9',
+    client_secret: 'S5sWvLKF2QZEcHfsq0Ap8lC9L-TX06JG8mLbez1aQgz71QSizJO1MI96Boy3tJ7zPwcDPZeigqMI60leKIXL2A',
     response_type: 'code',
     scope: 'openid email profile',
     // test use

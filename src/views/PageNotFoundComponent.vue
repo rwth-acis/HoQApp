@@ -1,10 +1,18 @@
 <template>
   <div>
-    <h1>Welcome to (AppName)!</h1>
+    Page not found.
   </div>
 </template>
 
 <script>
+
+export default {
+  name: 'PageNotFoundComponent',
+  async created () {
+    document.title = "Page Not Found";
+  }
+}
+
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

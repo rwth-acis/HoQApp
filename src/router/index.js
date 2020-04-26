@@ -1,12 +1,12 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import VueRouter from 'vue-router'
-import HomeComponent from '@/components/HomeComponent'
+import HomeComponent from '@/views/HomeComponent'
 import ProjectsComponent from '@/components/ProjectsComponent'
 import CategoriesComponent from '@/components/CategoriesComponent'
 import HoqComponent from '@/components/HoqComponent'
 import MyHoqComponent from '@/components/MyHoqComponent'
-import PageNotFoundComponent from '@/components/PageNotFoundComponent'
+import PageNotFoundComponent from '@/views/PageNotFoundComponent'
 import mainAuth from '../auth';
 
 Vue.use(Router)
@@ -49,7 +49,7 @@ const router = new Router({
       // this generates a separate chunk (about.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       // component: HoqComponent
-      component: () => import(/* webpackChunkName: "about" */ '../components/LoginComponent.vue')
+      component: () => import(/* webpackChunkName: "about" */ '../views/LoginComponent.vue')
     },
     {
       path: '*',

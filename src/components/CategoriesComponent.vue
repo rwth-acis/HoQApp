@@ -1,25 +1,24 @@
 <template>
   <div>
     <h2 v-if="project"> Categories to {{ project.name }} </h2>
-    <p class="error" v-if="error">{{ error }}</p>
     <table id="categoriesTable">
       <tr>
         <th>Name</th>
         <th>Description</th>
+        <th>Requirements</th>
         <th>Created</th>
         <th>Last Updated</th>
         <th>Followers</th>
-        <th>Number of Requirements</th>
         <th>Leader</th>
         <th>Actions</th>
       </tr>
       <tr v-for="(category, index) in categories">
         <td><a :href="'https://requirements-bazaar.org/projects/' + projectId + '/categories/' + category.id" target='_blank'>{{ category.name }}</a></td>
         <td :title="category.description">{{ category.shortDescription }}</td>
+        <td>{{ category.numberOfRequirements }}</td>
         <td>{{ category.created }}</td>
         <td>{{ category.lastUpdated }}</td>
         <td>{{ category.numberOfFollowers }}</td>
-        <td>{{ category.numberOfRequirements }}</td>
         <td>{{ category.leaderName }}</td>
         <td>
           <router-link v-if="category.numberOfRequirements > 0" :to="'/hoq/' + category.id">To HoQ</router-link>
@@ -41,11 +40,11 @@ export default {
       categories: [],
       projectId: '',
       project: null,
-      error: '',
       text: ''
     }
   },
   async created () {
+    document.title = "Categories";
     this.projectId = this.$route.params.projectId;
     this.idb = await this.getDb();
     try {
@@ -59,7 +58,6 @@ export default {
       if(!this.project){
         this.$router.push('/projects');
       }
-      // this.error = err.message;
     }
     this.categories.sort(function(a, b){
       if(a.name < b.name) { return -1; }
@@ -118,6 +116,7 @@ export default {
           let requirementsStore = db.createObjectStore('requirements', {keyPath: 'key'});
           let specificationsStore = db.createObjectStore('specifications', {keyPath: 'key'});
           let productsStore = db.createObjectStore('products', {keyPath: 'key'});
+          let authorizedCategoriesStore = db.createObjectStore('authorizedCategories', {keyPath: 'key'});
         };
       });
     },

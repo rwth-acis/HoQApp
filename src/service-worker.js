@@ -1,5 +1,5 @@
 if (workbox) {
-  console.log(`Yay! Workbox is loaded 🎉`);
+  console.log(`Workbox loaded!`);
   workbox.precaching.precacheAndRoute([]);
 
 

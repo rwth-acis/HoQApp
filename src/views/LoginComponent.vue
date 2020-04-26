@@ -4,11 +4,12 @@
   </div>
 </template>
 <script>
+import PostService from '../PostService'
 export default {
   created(){
     this.$router.push('/my-projects');
   },
-};
+}
 </script>
 <style>
 </style>

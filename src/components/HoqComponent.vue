@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2> Projects </h2>
-    <p class="error" v-if="error">{{ error }}</p>
+    <p id="alertBox">{{ error }}</p>
     <canvas id="canvas" width='800' height='600' v-on:click="clickCanvas"></canvas>
     <table id="houseTable">
         <!-- specifications -->
@@ -60,18 +60,18 @@
           </td>
           <td v-for="(specification, index) in specifications" :id="'ts-' + specification._id" class="specification">
             <p class="sideway"><span>
-              <input type="text" placeholder="New Specification.." class="specInput verticalInput" spellcheck="false" :value="specification.name" v-on:blur="changeSpecificationName" v-on:keyup="blurIfEnter" v-if="isAuthorized()" />
+              <input type="text" placeholder="New Specification.." class="specInput verticalInput" spellcheck="false" :value="specification.name" v-on:blur="changeSpecificationName" v-on:keyup="blurIfEnter" v-if="authorized" />
               <input type="text" placeholder="New Specification.." class="specInput verticalInput" spellcheck="false" :value="specification.name" v-on:blur="changeSpecificationName" v-on:keyup="blurIfEnter" v-else readonly />
             </span></p>
           </td>
           <td class="specification">
             <p class="sideway"><span>
-              <input type="text" placeholder="New Specification.." class="specInput verticalInput" spellcheck="false" v-on:blur="addNewColumn" v-on:keyup="blurIfEnter" v-if="isAuthorized()" />
+              <input type="text" placeholder="New Specification.." class="specInput verticalInput" spellcheck="false" v-on:blur="addNewColumn" v-on:keyup="blurIfEnter" v-if="authorized" />
               <input type="text" placeholder="New Specification.." class="specInput verticalInput" spellcheck="false" v-on:blur="addNewColumn" v-on:keyup="blurIfEnter" v-else readonly />
             </span></p>
           </td>
           <td class="controlPanel" colspan='5'>
-            <div v-if="isAuthorized()">
+            <div v-if="authorized">
               <input v-for="(product, index) in products" :id="'product-' + product.id" v-on:keyup="blurIfEnter" v-on:blur="changeProduct" type="text" :placeholder="'Product ' + (index + 1)" v-bind:value="product.name" />
             </div>
             <div v-else>
@@ -103,7 +103,7 @@
           <td class="hidden" colspan='2'></td>
           <td v-for="(specification, index) in specifications" class="target">
             <p class="sideway"><span>
-              <input type="text" placeholder="New Target.." class="targetInput verticalInput" spellcheck="false" :value="specification.target" v-on:blur="changeTargetName" v-on:keyup="blurIfEnter" v-if="isAuthorized()" />
+              <input type="text" placeholder="New Target.." class="targetInput verticalInput" spellcheck="false" :value="specification.target" v-on:blur="changeTargetName" v-on:keyup="blurIfEnter" v-if="authorized" />
               <input type="text" placeholder="New Target.." class="targetInput verticalInput" spellcheck="false" :value="specification.target" v-on:blur="changeTargetName" v-on:keyup="blurIfEnter" v-else readonly />
             </span></p>
           </td>
@@ -141,6 +141,8 @@ export default {
   name: 'ProjectsComponent',
   data () {
     return {
+      error: '',
+      authorized: false,
       activeUser: null,
       developers: [],
       yMap: null,
@@ -151,7 +153,6 @@ export default {
       products: [],
       canvas: null,
       categoryId: '',
-      error: '',
       needsUpdate: true,
       interval: null
     }
@@ -159,6 +160,7 @@ export default {
   async created () {
   },
   async mounted(){
+    document.title = "House of Quality";
     this.categoryId = this.$route.params.categoryId;
     this.canvas = document.getElementById("canvas");
     // prevents text selection
@@ -172,39 +174,46 @@ export default {
       try {
         this.activeUser = await PostService.getActiveUser(this.$oidc.user);
         this.developers = await PostService.getCategoryDevelopers(this.categoryId);
+        if(this.activeUser && this.developers){
+          this.authorized = !(this.getElementIndexById(this.developers, this.activeUser.id) == -1);
+          console.log("AUTHORIZED ONLINE");
+          if(this.authorized){
+            this.saveAuthorizedCategoryLocally();
+          }
+        }
       } catch (err) {
-        // this.error = "Active user " + err.message;
+        var authorizedCategories = await this.getAuthorizedCategoryLocally();
+        authorizedCategories.forEach(authCat => {
+          if(authCat == this.categoryId){
+            this.authorized = true;
+            console.log("AUTHORIZED OFFLINE");
+          }
+        });
       }
     }
     // REQUIREMENTS
     try {
-      // this.requirements = await this.getRequirementsLocaly();
       this.requirements = await PostService.getAllRequirements(this.categoryId);
-      this.saveRequirementsLocaly();
+      this.saveRequirementsLocally();
     } catch (err) {
-      this.requirements = await this.getRequirementsLocaly();
-      // this.error = "Requirements " + err.message;
+      this.requirements = await this.getRequirementsLocally();
     }
     if(this.requirements.length == 0){
       this.$router.push('/my-projects');
     }
     // SPEICIFICATIONS
     try {
-      // this.specifications = await this.getSpecificationsLocaly();
       this.specifications = await PostService.getAllSpecifications(this.categoryId);
-      this.saveSpecificationsLocaly();
+      this.saveSpecificationsLocally();
     } catch (err){
-      this.specifications = await this.getSpecificationsLocaly();
-      // this.error = "Specifications " + err.message;
+      this.specifications = await this.getSpecificationsLocally();
     }
     // PRODUCTS
     try {
-      // this.products = await this.getProductsLocaly();
       this.products = await PostService.getAllProducts(this.categoryId);
-      this.saveProductsLocaly();
+      this.saveProductsLocally();
     } catch (err){
-      this.products = await this.getProductsLocaly();
-      // this.error = "Products " + err.message;
+      this.products = await this.getProductsLocally();
     }
     this.requirements.sort(function(a, b){
       if(a.name.toLowerCase() < b.name.toLowerCase()) { return -1; }
@@ -220,11 +229,10 @@ export default {
       return 0;
     });
     const ydoc = new Y.Doc();
-    // this.provider = new WebrtcProvider('your-room-name', ydoc, { signaling: ['ws://localhost:4444'] });
-    this.provider = new WebsocketProvider('wss://demos.yjs.dev', 'my-roomname', ydoc);
-    console.log(this.provider);
+    this.provider = new WebrtcProvider('your-room-name', ydoc, { signaling: ['wss://demos.yjs.dev'] });
+    // this.provider = new WebsocketProvider('wss://demos.yjs.dev', 'my-roomname', ydoc);
     this.provider.on('status', event => {
-      console.log(event.status) // logs "connected" or "disconnected"
+      // connected
     })
     this.yMap = ydoc.getMap('map');
     this.yMap.observe(this.yOnChange);
@@ -304,6 +312,9 @@ export default {
       for(var i = 0; i < this.specifications.length; i++){
         var importance = 0;
         var tsId = this.specifications[i]._id;
+        if(!document.getElementById("ts-" + tsId)){
+          continue;
+        }
         var tsCellIndex = document.getElementById("ts-" + tsId).cellIndex;
         for(var j = 0; j < this.specifications[i].requirements.length; j++){
           var crId = this.specifications[i].requirements[j]._id;
@@ -320,6 +331,9 @@ export default {
         // TODO: SHOULD BE VALUE NOT TEXTCONTENT
         var tsId = this.specifications[i]._id;
         var tsCellIndex = document.getElementById("ts-" + tsId).cellIndex;
+        if(!document.getElementById("ts-" + tsId)){
+          continue;
+        }
         var importance = document.getElementById('importanceValue').children[tsCellIndex].textContent;
         document.getElementById('importanceWeight').children[tsCellIndex].textContent = helpers.coolRounder(importance * 100 / totalImportance);
       }
@@ -328,9 +342,6 @@ export default {
         document.getElementById('importanceValueTotal').textContent = totalImportance;
         document.getElementById('importanceWeightTotal').textContent = "100%";
       }
-      // document.getElementById('importanceValueTotal').nextSibling.textContent = "Total Importance Value";
-      // document.getElementById('importanceWeightTotal').nextSibling.textContent = "Total Importance Weight";
-
     },
     clearCanvas: function(){
       const ctx = this.canvas.getContext('2d');
@@ -451,7 +462,8 @@ export default {
       }
     },
     clickMinMax: function(e){
-      if(!this.isAuthorized()){
+      if(!this.authorized){
+        this.authAlert();
         return;
       }
       var cellIndex = e.target.cellIndex;
@@ -475,7 +487,7 @@ export default {
           }
           this.specifications[i].minMax = newVal;
           this.setMinMax(e.target, newVal);
-          this.saveSpecificationsLocaly();
+          this.saveSpecificationsLocally();
           PostService.changeSpecification(this.specifications[i]);
           this.yChangeSpecifications();
           break outerloop;
@@ -489,7 +501,8 @@ export default {
       cell.classList.add(this.getMinMaxClassFromValue(value));
     },
     clickRelation: function(e){
-      if(!this.isAuthorized()){
+      if(!this.authorized){
+        this.authAlert();
         return;
       }
       var rowIndex = e.target.parentElement.rowIndex;
@@ -520,7 +533,7 @@ export default {
               this.specifications[i].requirements[j].value = newVal;
               this.setRelationship(e.target, newVal);
               this.calculateImportance();
-              this.saveSpecificationsLocaly();
+              this.saveSpecificationsLocally();
               PostService.changeSpecification(this.specifications[i]);
               this.yChangeSpecifications();
               break outerloop;
@@ -551,7 +564,7 @@ export default {
             return;
           }
           this.specifications[i].target = e.target.value;
-          this.saveSpecificationsLocaly();
+          this.saveSpecificationsLocally();
           PostService.changeSpecification(this.specifications[i]);
           this.yChangeSpecifications();
           break;
@@ -566,7 +579,7 @@ export default {
             return;
           }
           this.specifications[index].name = e.target.value;
-          this.saveSpecificationsLocaly();
+          this.saveSpecificationsLocally();
           PostService.changeSpecification(this.specifications[index]);
           this.yChangeSpecifications();
         }
@@ -575,7 +588,8 @@ export default {
       }
     },
     clickCanvas: function(e){
-      if(!this.isAuthorized()){
+      if(!this.authorized){
+        this.authAlert();
         return;
       }
       var ctx = this.canvas.getContext('2d');
@@ -620,7 +634,7 @@ export default {
                   this.specifications[i].specifications[j].value = -2;
                 }
                 newValL = this.specifications[i].specifications[j].value;
-                this.saveSpecificationsLocaly();
+                this.saveSpecificationsLocally();
                 PostService.changeSpecification(this.specifications[i]);
                 this.yChangeSpecifications();
               }
@@ -634,7 +648,7 @@ export default {
                   this.specifications[i].specifications[j].value = -2;
                 }
                 newValR = this.specifications[i].specifications[j].value;
-                this.saveSpecificationsLocaly();
+                this.saveSpecificationsLocally();
                 PostService.changeSpecification(this.specifications[i]);
                 this.yChangeSpecifications();
               }
@@ -705,7 +719,7 @@ export default {
       for(var i = 0; i < this.specifications.length; i++){
         this.specifications[i].specifications.push({"_id": specification._id + "", "value": 0});
       }
-      this.saveSpecificationsLocaly();
+      this.saveSpecificationsLocally();
       PostService.addSpecification(specification);
       this.yChangeSpecifications();
     },
@@ -716,7 +730,7 @@ export default {
       var index = this.getElementIndexBy_Id(this.specifications, specificationId);
       if(confirm('Are you sure you want to delete this technical specification?')){
         // TODO: DELETE FROM LOCAL DATABASE
-        this.deleteSpecificationsLocaly(specificationId);
+        this.deleteSpecificationsLocally(specificationId);
         PostService.deleteSpecification({"_id": specificationId});
         if(index >= 0){
           this.specifications.splice(index, 1);
@@ -745,7 +759,7 @@ export default {
           } else {
             this.products[i].abbreviation = this.products[i].name.toUpperCase().substring(0, 1) + this.products[i].name.toLowerCase().substring(1, 2);
           }
-          this.saveProductsLocaly();
+          this.saveProductsLocally();
           PostService.changeProduct(this.products[i]);
           this.yChangeProducts();
           // this.setProductValues();
@@ -772,7 +786,8 @@ export default {
       return "";
     },
     clickProductValue: function(e){
-      if(!this.isAuthorized()){
+      if(!this.authorized){
+        this.authAlert();
         return;
       }
       var cellIndex = e.target.cellIndex;
@@ -787,7 +802,7 @@ export default {
             this.products[i].requirements[j].value = 0;
             var oldId = this.products[i].id;
             newId = this.products[i].id + 1;
-            this.saveProductsLocaly();
+            this.saveProductsLocally();
             PostService.changeProduct(this.products[i]);
             this.yChangeProducts();
             break outerloop;
@@ -829,7 +844,7 @@ export default {
                 }
               }
             }
-            this.saveProductsLocaly();
+            this.saveProductsLocally();
             PostService.changeProduct(this.products[i]);
             this.yChangeProducts();
             break outerloop2;
@@ -857,10 +872,11 @@ export default {
           let requirementsStore = db.createObjectStore('requirements', {keyPath: 'key'});
           let specificationsStore = db.createObjectStore('specifications', {keyPath: 'key'});
           let productsStore = db.createObjectStore('products', {keyPath: 'key'});
+          let authorizedCategoriesStore = db.createObjectStore('authorizedCategories', {keyPath: 'key'});
         };
       });
     },
-    async getRequirementsLocaly(){
+    async getRequirementsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['requirements'],'readonly');
         trans.oncomplete = e => {
@@ -886,7 +902,7 @@ export default {
         };
       });
     },
-    async getSpecificationsLocaly(){
+    async getSpecificationsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['specifications'],'readonly');
         trans.oncomplete = e => {
@@ -905,7 +921,7 @@ export default {
         };
       });
     },
-    async getProductsLocaly(){
+    async getProductsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['products'],'readonly');
         trans.oncomplete = e => {
@@ -924,7 +940,26 @@ export default {
         };
       });
     },
-    async saveRequirementsLocaly(){
+    async getAuthorizedCategoryLocally(){
+      return new Promise((resolve, reject) => {
+        let trans = this.idb.transaction(['authorizedCategories'],'readonly');
+        trans.oncomplete = e => {
+          resolve(authorizedCategories);
+        };
+        let store = trans.objectStore('authorizedCategories');
+        let authorizedCategories = [];
+        store.openCursor().onsuccess = e => {
+          let cursor = e.target.result;
+          if (cursor) {
+            if(cursor.key == this.$oidc.user.profile.sub){
+              authorizedCategories.push(cursor.value.value);
+            }
+            cursor.continue();
+          }
+        };
+      });
+    },
+    async saveRequirementsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['requirements'],'readwrite');
         trans.oncomplete = e => {
@@ -946,7 +981,7 @@ export default {
         });
       });
     },
-    async saveSpecificationsLocaly(){
+    async saveSpecificationsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['specifications'],'readwrite');
         trans.oncomplete = e => {
@@ -968,7 +1003,7 @@ export default {
         });
       });
     },
-    async saveProductsLocaly(){
+    async saveProductsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['products'],'readwrite');
         trans.oncomplete = e => {
@@ -980,7 +1015,17 @@ export default {
         });
       });
     },
-    async deleteSpecificationsLocaly(key){
+    async saveAuthorizedCategoryLocally(){
+      return new Promise((resolve, reject) => {
+        let trans = this.idb.transaction(['authorizedCategories'],'readwrite');
+        trans.oncomplete = e => {
+          resolve();
+        };
+        let store = trans.objectStore('authorizedCategories');
+        store.put({key: this.$oidc.user.profile.sub, value: this.categoryId});
+      });
+    },
+    async deleteSpecificationsLocally(key){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['specifications'],'readwrite');
         trans.oncomplete = e => {
@@ -1018,16 +1063,9 @@ export default {
       yProducts.push(this.products);
       this.yMap.set(this.categoryId + '-products', yProducts);
     },
-    isAuthorized: function(){
-      if(this.activeUser && this.developers && this.$oidc.isAuthenticated){
-        return !(this.getElementIndexById(this.developers, this.activeUser.id) == -1);
-      } else {
-        return false;
-      }
-    },
     async checkRequirements(){
       try {
-        // this.requirements = await this.getRequirementsLocaly();
+        // this.requirements = await this.getRequirementsLocally();
         let newRequirements = await PostService.getAllRequirements(this.categoryId);
         for(var i = 0; i < this.requirements.length; i++){
           var index1 = this.getElementIndexById(newRequirements, this.requirements[i].id);
@@ -1036,11 +1074,11 @@ export default {
             this.requirements[i].upVotes = newRequirements[index1].upVotes;
             this.requirements[i].downVotes = newRequirements[index1].downVotes;
           } else {
+            console.log("changeS1");
             for(var j = 0; j < this.specifications.length; j++){
               var idx = this.getElementIndexBy_Id(this.specifications[j].requirements, this.requirements[i].id);
               if(idx >= 0){
                 this.specifications[j].requirements.splice(idx, 1);
-                console.log(this.specifications[j].requirements);
                 PostService.changeSpecification(this.specifications[j]);
               }
             }
@@ -1048,7 +1086,6 @@ export default {
               var idx = this.getElementIndexBy_Id(this.products[j].requirements, this.requirements[i].id);
               if(idx >= 0){
                 this.products[j].requirements.splice(idx, 1);
-                console.log(this.products[j].requirements);
                 PostService.changeProduct(this.products[j]);
               }
             }
@@ -1058,6 +1095,7 @@ export default {
         for(var i = 0; i < newRequirements.length; i++){
           var index2 = this.getElementIndexById(this.requirements, newRequirements[i].id);
           if(index2 == -1){
+            console.log("changeS2");
             for(var j = 0; j < this.specifications.length; j++){
               this.specifications[j].requirements.push({"_id": newRequirements[i].id + "", "value": 0});
               PostService.changeSpecification(this.specifications[j]);
@@ -1067,17 +1105,27 @@ export default {
               PostService.changeProduct(this.products[j]);
             }
             this.requirements.push(newRequirements[i]);
+            this.requirements.sort(function(a, b){
+              if(a.name.toLowerCase() < b.name.toLowerCase()) { return -1; }
+              if(a.name.toLowerCase() > b.name.toLowerCase()) { return 1; }
+              return 0;
+            });
           }
         }
-        this.requirements.sort(function(a, b){
-          if(a.name.toLowerCase() < b.name.toLowerCase()) { return -1; }
-          if(a.name.toLowerCase() > b.name.toLowerCase()) { return 1; }
-          return 0;
-        });
-        this.saveRequirementsLocaly();
+        this.saveRequirementsLocally();
       } catch (err) {
-        // console.error(err);
       }
+    },
+    authAlert: function(){
+      if(this.$oidc.isAuthenticated){
+        this.error = "You are not authorized for this diagram. Only users assigned as developers in Requirements Bazaar can perform changes.";
+      } else {
+        this.error = "You are not logged in.";
+      }
+      setTimeout(() => {
+        this.error = "";
+        document.getElementById('alertBox').display = "none";
+      }, 5000);
     }
   }
 }
@@ -1259,7 +1307,8 @@ canvas {
   font-size: 16px;
 }
 [type="text"] {
-  color: rgb(255, 127, 39);
+  /* color: rgb(255, 127, 39); */
+  color: black;
   height: 48px;
   width: 100%;
   text-align: center;

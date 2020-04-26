@@ -1,6 +1,6 @@
 module.exports = {
   pwa: {
-    name: 'My App',
+    name: 'House of Quality App',
     themeColor: '#4DBA87',
     msTileColor: '#000000',
     appleMobileWebAppCapable: 'yes',
