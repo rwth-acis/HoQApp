@@ -177,7 +177,6 @@ export default {
         this.developers = await PostService.getCategoryDevelopers(this.categoryId);
         if(this.activeUser && this.developers){
           this.authorized = !(this.getElementIndexById(this.developers, this.activeUser.id) == -1);
-          console.log("AUTHORIZED ONLINE");
           if(this.authorized){
             this.saveAuthorizedCategoryLocally();
           }
@@ -187,7 +186,6 @@ export default {
         authorizedCategories.forEach(authCat => {
           if(authCat == this.categoryId){
             this.authorized = true;
-            console.log("AUTHORIZED OFFLINE");
           }
         });
       }
@@ -197,6 +195,7 @@ export default {
     try {
       this.requirements = await PostService.getAllRequirements(this.categoryId);
       this.saveRequirementsLocally();
+      console.log(this.requirements);
     } catch (err) {
       this.requirements = await this.getRequirementsLocally();
     }
@@ -231,7 +230,7 @@ export default {
       return 0;
     });
     const ydoc = new Y.Doc();
-    this.provider = new WebrtcProvider('your-room-name', ydoc, { signaling: ['wss://demos.yjs.dev'] });
+    this.provider = new WebrtcProvider('hoq-' + this.categoryId, ydoc, { signaling: ['wss://demos.yjs.dev'] });
     // this.provider = new WebsocketProvider('wss://demos.yjs.dev', 'my-roomname', ydoc);
     this.provider.on('status', event => {
       // connected
@@ -241,7 +240,7 @@ export default {
     this.calculateImportance();
     this.createCanvas();
     window.addEventListener("resize", this.createCanvas);
-    this.interval = window.setInterval(this.checkRequirements, 5000);
+    this.interval = window.setInterval(this.checkRequirements, 60000);
   },
   updated(){
     this.calculateImportance();
@@ -1059,11 +1058,11 @@ export default {
     },
     yOnChange: function(){
       this.needsUpdate = true; // for createCanvas()
-      if(this.yMap.get(this.categoryId + '-specifications')){
-        this.specifications = this.entriesForCategoryId(this.yMap.get(this.categoryId + '-specifications').toArray(), this.categoryId);
+      if(this.yMap.get('specifications')){
+        this.specifications = this.yMap.get('specifications').toArray();
       }
-      if(this.yMap.get(this.categoryId + '-products')){
-        this.products = this.entriesForCategoryId(this.yMap.get(this.categoryId + '-products').toArray(), this.categoryId);
+      if(this.yMap.get('products')){
+        this.products = this.yMap.get('products').toArray();
       }
     },
     entriesForCategoryId: function(array, categoryId) {
@@ -1078,12 +1077,12 @@ export default {
     yChangeSpecifications: function(){
       const ySpecifications = new Y.Array();
       ySpecifications.push(this.specifications);
-      this.yMap.set(this.categoryId + '-specifications', ySpecifications);
+      this.yMap.set('specifications', ySpecifications);
     },
     yChangeProducts: function(){
       const yProducts = new Y.Array();
       yProducts.push(this.products);
-      this.yMap.set(this.categoryId + '-products', yProducts);
+      this.yMap.set('products', yProducts);
     },
     async checkRequirements(){
       try {
