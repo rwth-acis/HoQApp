@@ -72,10 +72,10 @@
           </td>
           <td class="controlPanel" colspan='5'>
             <div v-if="authorized">
-              <input v-for="(product, index) in products" :id="'product-' + product.id" v-on:keyup="blurIfEnter" v-on:blur="changeProduct" type="text" :placeholder="'Product ' + (index + 1)" v-bind:value="product.name" />
+              <input v-for="(product, index) in products" :id="'product-' + product.id" v-on:keyup="blurIfEnter" :class="{ 'myProduct': product.id === 0 }" v-on:blur="changeProduct" type="text" :placeholder="'Product ' + (index + 1)" v-bind:value="product.name" />
             </div>
             <div v-else>
-              <input v-for="(product, index) in products" :id="'product-' + product.id" v-on:keyup="blurIfEnter" v-on:blur="changeProduct" type="text" :placeholder="'Product ' + (index + 1)" v-bind:value="product.name" readonly />
+              <input v-for="(product, index) in products" :id="'product-' + product.id" v-on:keyup="blurIfEnter" :class="{ 'myProduct': product.id === 0 }" v-on:blur="changeProduct" type="text" :placeholder="'Product ' + (index + 1)" v-bind:value="product.name" readonly />
             </div>
           </td>
         </tr>
@@ -244,6 +244,7 @@ export default {
   },
   updated(){
     this.calculateImportance();
+    this.fixProductColors();
     if(this.canvas && this.needsUpdate){
       this.createCanvas();
       // this.needsUpdate = false;
@@ -785,6 +786,24 @@ export default {
         }
       }
       return "";
+    },
+    fixProductColors: function(){
+      var requirementRows = document.getElementsByClassName("requirement-row");
+      var index = this.getElementIndexById(this.products, 0);
+      if(index < 0){
+        return;
+      }
+      var myProductAbbreviation = this.products[index].abbreviation;
+      for(var i = 0; i < requirementRows.length; i++){
+        for(var j = 1; j <= 5; j++){
+          var cell = requirementRows[i].children[2 + this.specifications.length + j];
+          if(cell.innerHTML == myProductAbbreviation){
+            cell.classList.add("redText");
+          } else {
+            cell.classList.remove("redText");
+          }
+        }
+      }
     },
     clickProductValue: function(e){
       if(!this.authorized){
@@ -1373,6 +1392,10 @@ form {
 
 .blackText {
   color: black;
+}
+
+.myProduct {
+  color: red;
 }
 
 </style>
