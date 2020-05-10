@@ -230,8 +230,7 @@ export default {
       return 0;
     });
     const ydoc = new Y.Doc();
-    this.provider = new WebrtcProvider('hoq-' + this.categoryId, ydoc, { signaling: ['wss://demos.yjs.dev'] });
-    // this.provider = new WebsocketProvider('wss://demos.yjs.dev', 'my-roomname', ydoc);
+    this.provider = new WebrtcProvider('hoq-' + this.categoryId, ydoc, { signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'] });
     this.provider.on('status', event => {
       // connected
     })
