@@ -13,7 +13,7 @@
         <th>Actions</th>
       </tr>
       <tr v-for="(category, index) in categories">
-        <td><a :href="'https://requirements-bazaar.org/projects/' + projectId + '/categories/' + category.id" target='_blank'>{{ category.name }}</a></td>
+        <td><a :href="'https://beta.requirements-bazaar.org/projects/' + projectId + '/categories/' + category.id" target='_blank'>{{ category.name }}</a></td>
         <td :title="category.description">{{ category.shortDescription }}</td>
         <td>{{ category.numberOfRequirements }}</td>
         <td>{{ category.created }}</td>

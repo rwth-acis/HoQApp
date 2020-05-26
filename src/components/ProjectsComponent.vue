@@ -12,7 +12,7 @@
         <th>Actions</th>
       </tr>
       <tr v-for="(project, index) in displayedProjects">
-        <td><a :href="'https://requirements-bazaar.org/projects/' + project.id" target='_blank'>{{ project.name }}</a></td>
+        <td><a :href="'https://beta.requirements-bazaar.org/projects/' + project.id" target='_blank'>{{ project.name }}</a></td>
         <td :title="project.description">{{ project.shortDescription }}</td>
         <td>{{ project.numberOfCategories }}</td>
         <td>{{ project.created }}</td>
