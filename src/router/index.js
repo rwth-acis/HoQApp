@@ -45,11 +45,7 @@ const router = new Router({
       meta: {
         authName: mainAuth.authName
       },
-      // route level code-splitting
-      // this generates a separate chunk (about.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      // component: HoqComponent
-      component: () => import(/* webpackChunkName: "about" */ '../views/LoginComponent.vue')
+      component: () => import('../views/LoginComponent.vue')
     },
     {
       path: '*',

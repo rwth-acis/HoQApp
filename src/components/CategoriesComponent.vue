@@ -48,22 +48,26 @@ export default {
     this.projectId = this.$route.params.projectId;
     this.idb = await this.getDb();
     try {
+      // load live categories
       this.project = await PostService.getProject(this.projectId);
       this.categories = await PostService.getAllCategories(this.projectId);
       this.saveCategoriesLocaly();
     } catch (err){
-      var project = await this.getProjectName(this.projectId);
+      // load local categories
+      var project = await this.getProjectLocally();
       this.project = project[0];
       this.categories = await this.getCategoriesLocaly();
       if(!this.project){
         this.$router.push('/projects');
       }
     }
+    // order categories
     this.categories.sort(function(a, b){
       if(a.name < b.name) { return -1; }
       if(a.name > b.name) { return 1; }
       return 0;
     });
+    // fix description, dates, leader, availability of link
     this.categories.forEach(category => {
       // description
       category.shortDescription = category.description;
@@ -90,11 +94,12 @@ export default {
       } else {
         category.leaderName = "Unassigned";
       }
-      // active link
+      // availability of link
       category.active = category.numberOfRequirements == 0 ? "not-active" : "";
     });
   },
   methods:{
+    // returns indexedDB instance
     async getDb() {
       return new Promise((resolve, reject) => {
         let request = window.indexedDB.open('hoqStore', 1);
@@ -120,6 +125,7 @@ export default {
         };
       });
     },
+    // returns local categories for this project
     async getCategoriesLocaly(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['categories'],'readonly');
@@ -131,13 +137,18 @@ export default {
         store.openCursor().onsuccess = e => {
           let cursor = e.target.result;
           if (cursor) {
-            categories.push(cursor.value.value); // DO NOT I REPEAT DO NOT REMOVE SECOND VALUE FROM HERE
+            var found = false;
+            var category = cursor.value.value;
+            if(category.projectId == this.projectId){
+              categories.push(cursor.value.value);
+            }
             cursor.continue();
           }
         };
       });
     },
-    async getProjectName(projectId){
+    // returns local project name
+    async getProjectLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['projects'],'readonly');
         trans.oncomplete = e => {
@@ -148,7 +159,7 @@ export default {
         store.openCursor().onsuccess = e => {
           let cursor = e.target.result;
           if (cursor) {
-            if(cursor.value.key == projectId){
+            if(cursor.value.key == this.projectId){
               projects.push(cursor.value.value); // DO NOT I REPEAT DO NOT REMOVE SECOND VALUE FROM HERE
             }
             cursor.continue();
@@ -156,6 +167,7 @@ export default {
         };
       });
     },
+    // saves categories locally
     async saveCategoriesLocaly(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['categories'],'readwrite');
@@ -163,7 +175,15 @@ export default {
           resolve();
         };
         let store = trans.objectStore('categories');
-        store.clear();
+        store.openCursor().onsuccess = e => {
+          let cursor = e.target.result;
+          if (cursor) {
+            if(cursor.value.value.projectId == this.projectId && !helpers.isInArrayById(cursor.value.key, this.categories)){
+              store.delete(cursor.value.key);
+            }
+            cursor.continue();
+          }
+        };
         this.categories.forEach(category => {
           store.put({key: category.id, value: category});
         });

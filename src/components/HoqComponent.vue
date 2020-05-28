@@ -172,10 +172,12 @@ export default {
     this.idb = await this.getDb();
     // ACTIVE USER
     if(this.$oidc.isAuthenticated){
+      // user authenticated
       try {
         this.activeUser = await PostService.getActiveUser(this.$oidc.user);
         this.developers = await PostService.getCategoryDevelopers(this.categoryId);
         if(this.activeUser && this.developers){
+          // user authorized
           this.authorized = !(this.getElementIndexById(this.developers, this.activeUser.id) == -1);
           if(this.authorized){
             this.saveAuthorizedCategoryLocally();
@@ -193,42 +195,53 @@ export default {
     this.categoryName = await this.getCategoryNameLocally();
     // REQUIREMENTS
     try {
+      // load live requirements
       this.requirements = await PostService.getAllRequirements(this.categoryId);
       this.saveRequirementsLocally();
       console.log(this.requirements);
     } catch (err) {
+      // load local requirements
       this.requirements = await this.getRequirementsLocally();
     }
     if(this.requirements.length == 0){
+      // diagram is empty
       this.$router.push('/my-projects');
     }
     // SPEICIFICATIONS
     try {
+      // load live specifications
       this.specifications = await PostService.getAllSpecifications(this.categoryId);
       this.saveSpecificationsLocally();
     } catch (err){
+      // load local specifications
       this.specifications = await this.getSpecificationsLocally();
     }
     // PRODUCTS
     try {
+      // load live products
       this.products = await PostService.getAllProducts(this.categoryId);
       this.saveProductsLocally();
     } catch (err){
+      // load local products
       this.products = await this.getProductsLocally();
     }
+    // order requirements
     this.requirements.sort(function(a, b){
       if(a.name.toLowerCase() < b.name.toLowerCase()) { return -1; }
       if(a.name.toLowerCase() > b.name.toLowerCase()) { return 1; }
       return 0;
     });
+    // order specifications
     this.specifications.sort(function(a, b){
       return new Date(a.created) - new Date(b.created);
     });
+    // order products
     this.products.sort(function(a, b){
       if(a.id < b.id) { return -1; }
       if(a.id > b.id) { return 1; }
       return 0;
     });
+    // set Yjs Provider
     const ydoc = new Y.Doc();
     this.provider = new WebrtcProvider('hoq-' + this.categoryId, ydoc, { signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'] });
     this.provider.on('status', event => {
@@ -236,27 +249,29 @@ export default {
     })
     this.yMap = ydoc.getMap('map');
     this.yMap.observe(this.yOnChange);
+    // initial importance calculation
     this.calculateImportance();
     this.createCanvas();
     window.addEventListener("resize", this.createCanvas);
     this.interval = window.setInterval(this.checkRequirements, 60000);
   },
   updated(){
+    // recalculate importances
     this.calculateImportance();
     this.fixProductColors();
+    // repaint canvas if needed
     if(this.canvas && this.needsUpdate){
       this.createCanvas();
       // this.needsUpdate = false;
     }
   },
   beforeDestroy(){
+    // remove listeners and disconnect Yjs
     window.removeEventListener("resize", this.createCanvas);
     clearInterval(this.interval);
     if(this.provider){
       this.provider.destroy();
     }
-  },
-  destoryed(){
   },
   methods:{
     getMinMaxClassFromValue: function(value){
@@ -271,6 +286,7 @@ export default {
           return "";
       }
     },
+    // returns CSS class for a value in the Interrelationships Matrix (0, 1, 3, 9)
     getRelClass: function(specification, requirement){
       var index = this.getElementIndexBy_Id(specification.requirements, requirement.id);
       if(!specification.requirements[index]){
@@ -278,6 +294,7 @@ export default {
       }
       return this.getRelClassFromValue(specification.requirements[index].value);
     },
+    // helper for getRelClass
     getRelClassFromValue: function(value){
       switch (value) {
         case 0:
@@ -292,6 +309,7 @@ export default {
           return "";
       }
     },
+    // returns index of an element in an array based in id
     getElementIndexById: function(array, id){
       for(var i = 0; i < array.length; i++){
         if(array[i].id == id){
@@ -300,6 +318,7 @@ export default {
       }
       return -1;
     },
+    // returns index of an element in an array based in _id
     getElementIndexBy_Id: function(array, id){
       for(var i = 0; i < array.length; i++){
         if(array[i]._id == id){
@@ -308,6 +327,7 @@ export default {
       }
       return -1;
     },
+    // calculates importances
     calculateImportance: function(){
       var totalImportance = 0;
       for(var i = 0; i < this.specifications.length; i++){
@@ -327,9 +347,7 @@ export default {
         totalImportance += importance;
         document.getElementById('importanceValue').children[tsCellIndex].textContent = importance;
       }
-
       for(var i = 0; i < this.specifications.length; i++){
-        // TODO: SHOULD BE VALUE NOT TEXTCONTENT
         var tsId = this.specifications[i]._id;
         var tsCellIndex = document.getElementById("ts-" + tsId).cellIndex;
         if(!document.getElementById("ts-" + tsId)){
@@ -338,18 +356,18 @@ export default {
         var importance = document.getElementById('importanceValue').children[tsCellIndex].textContent;
         document.getElementById('importanceWeight').children[tsCellIndex].textContent = helpers.coolRounder(importance * 100 / totalImportance);
       }
-
       if(document.getElementById('importanceValueTotal') && document.getElementById('importanceWeightTotal')){
         document.getElementById('importanceValueTotal').textContent = totalImportance;
         document.getElementById('importanceWeightTotal').textContent = "100%";
       }
     },
+    // clears canvas
     clearCanvas: function(){
       const ctx = this.canvas.getContext('2d');
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     },
+    // creates the canvas
     createCanvas: function(){
-      // TODO: KEEP VALUES
       this.clearCanvas();
       var ctx = this.canvas.getContext('2d');
       if(!document.getElementById('specifications')){
@@ -397,12 +415,13 @@ export default {
           if(document.getElementById('ts-' + this.specifications[i]._id) && document.getElementById('ts-' + this.specifications[i].specifications[j]._id)){
             var tsIndex1 = document.getElementById('ts-' + this.specifications[i]._id).cellIndex; // changeToDate
             var tsIndex2 = document.getElementById('ts-' + this.specifications[i].specifications[j]._id).cellIndex; // changeToDate
-            this.setInterrelationship(tsIndex1, tsIndex2, this.specifications[i].specifications[j].value);
+            this.setCorrelationValue(tsIndex1, tsIndex2, this.specifications[i].specifications[j].value);
           }
         }
       }
     },
-    setInterrelationship: function(tsIndex1, tsIndex2, value){
+    // set value in Technical Correlation Matrix and change symbol (UI)
+    setCorrelationValue: function(tsIndex1, tsIndex2, value){
       if(tsIndex1 == tsIndex2){
         return;
       }
@@ -419,7 +438,6 @@ export default {
       y -= 35/2;
       switch(value){
         case -2:
-          // TODO: CHANGE VALUE
           var img = new Image();
           img.src = require('../assets/table/strong-negative.png');
           img.height = '35';
@@ -428,7 +446,6 @@ export default {
           };
           break;
         case -1:
-          // TODO: CHANGE VALUE
           var img = new Image();
           img.src = require('../assets/table/negative.png');
           img.width = '35';
@@ -438,10 +455,8 @@ export default {
           };
           break;
         case 0:
-          // TODO: CHANGE VALUE
           break;
         case 1:
-          // TODO: CHANGE VALUE
           var img = new Image();
           img.src = require('../assets/table/positive.png');
           img.width = '35';
@@ -451,7 +466,6 @@ export default {
           };
           break;
         case 2:
-          // TODO: CHANGE VALUE
           var img = new Image();
           img.src = require('../assets/table/strong-positive.png');
           img.width = '35';
@@ -462,6 +476,7 @@ export default {
           break;
       }
     },
+    // event handler for clicking min/max (changes values)
     clickMinMax: function(e){
       if(!this.authorized){
         this.authAlert();
@@ -495,12 +510,14 @@ export default {
         }
       }
     },
+    // update symbol (UI)
     setMinMax: function(cell, value){
       cell.classList.remove("minMaxUp");
       cell.classList.remove("minMaxDown");
       cell.classList.remove("minMaxNeutral");
       cell.classList.add(this.getMinMaxClassFromValue(value));
     },
+    // event handler for clicking Interrelationships Matrix
     clickRelation: function(e){
       if(!this.authorized){
         this.authAlert();
@@ -532,7 +549,7 @@ export default {
                   break;
               }
               this.specifications[i].requirements[j].value = newVal;
-              this.setRelationship(e.target, newVal);
+              this.setInterrelationshipValue(e.target, newVal);
               this.calculateImportance();
               this.saveSpecificationsLocally();
               PostService.changeSpecification(this.specifications[i]);
@@ -543,7 +560,8 @@ export default {
         }
       }
     },
-    setRelationship: function(cell, value){
+    // change symbol in Interrelationships Matrix (UI)
+    setInterrelationshipValue: function(cell, value){
       cell.classList.remove("relWeak");
       cell.classList.remove("relFair");
       cell.classList.remove("relStrong");
@@ -551,11 +569,13 @@ export default {
         cell.classList.add(this.getRelClassFromValue(value));
       }
     },
+    // blur textfield if ENTER pressed
     blurIfEnter: function(e){
       if(e.keyCode === 13){
         e.target.blur();
       }
     },
+    // eventhandler for bluring a target textfield
     changeTargetName: function(e){
       var tsIndex = e.target.closest('td').cellIndex;
       var tsId = helpers.getIdAfterDash(document.getElementById('specifications').children[tsIndex].id);
@@ -572,6 +592,7 @@ export default {
         }
       }
     },
+    // event handler for bluring a specification textfield
     changeSpecificationName: function(e){
       if(e.target.value != ""){
         var index = this.getElementIndexBy_Id(this.specifications, helpers.getIdAfterDash(e.target.closest('td').id));
@@ -588,6 +609,7 @@ export default {
         this.deleteColumn(e);
       }
     },
+    // event handler for clicking the Technical Correlation Matrix
     clickCanvas: function(e){
       if(!this.authorized){
         this.authAlert();
@@ -694,6 +716,7 @@ export default {
         }
       }
     },
+    // event handler for bluring a "New Specification" textfield
     addNewColumn: function(e){
       this.needsUpdate = true;
       if(e.target.value == ""){
@@ -724,6 +747,7 @@ export default {
       PostService.addSpecification(specification);
       this.yChangeSpecifications();
     },
+    // deleting a specification column
     deleteColumn: function(e){
       this.needsUpdate = true;
       var specificationElement = e.target.closest('td');
@@ -743,6 +767,7 @@ export default {
         }
       }
     },
+    // edit product
     changeProduct: function(e){
       for(var i = 0; i < this.products.length; i++){
         if(this.products[i].id == helpers.getIdAfterDash(e.target.id)){
@@ -763,10 +788,10 @@ export default {
           this.saveProductsLocally();
           PostService.changeProduct(this.products[i]);
           this.yChangeProducts();
-          // this.setProductValues();
         }
       }
     },
+    // returns product abbreviation
     getProductAbbreviation: function(requirementId, productValue){
       for(var i = 0; i < this.products.length; i++){
         var index = this.getElementIndexBy_Id(this.products[i].requirements, requirementId);
@@ -786,6 +811,7 @@ export default {
       }
       return "";
     },
+    // fixing product colors (red for product in development/black for competitors)
     fixProductColors: function(){
       var requirementRows = document.getElementsByClassName("requirement-row");
       var index = this.getElementIndexById(this.products, 0);
@@ -804,6 +830,7 @@ export default {
         }
       }
     },
+    // event handler for clicking the Comparative Assessment Section
     clickProductValue: function(e){
       if(!this.authorized){
         this.authAlert();
@@ -828,7 +855,6 @@ export default {
           }
         }
       }
-
       outerloop4:
       while(true){
         if(newId > 4){
@@ -848,7 +874,6 @@ export default {
           }
         }
       }
-
       if(newId != -1){
         outerloop2:
         for(var i = 0; i < this.products.length; i++){
@@ -871,6 +896,7 @@ export default {
         }
       }
     },
+    // returns indexedDB instance
     async getDb() {
       return new Promise((resolve, reject) => {
         let request = window.indexedDB.open('hoqStore', 1);
@@ -895,6 +921,7 @@ export default {
         };
       });
     },
+    // returns local requirements for this category
     async getRequirementsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['requirements'],'readonly');
@@ -921,6 +948,7 @@ export default {
         };
       });
     },
+    // returns local specifications for this category
     async getSpecificationsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['specifications'],'readonly');
@@ -940,6 +968,7 @@ export default {
         };
       });
     },
+    // returns local products for this category
     async getProductsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['products'],'readonly');
@@ -959,6 +988,7 @@ export default {
         };
       });
     },
+    // returns authorized categories for the authenticated user
     async getAuthorizedCategoryLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['authorizedCategories'],'readonly');
@@ -978,6 +1008,7 @@ export default {
         };
       });
     },
+    // returns name of current category
     async getCategoryNameLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['categories'],'readonly');
@@ -998,6 +1029,7 @@ export default {
         };
       });
     },
+    // saves requirements locally
     async saveRequirementsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['requirements'],'readwrite');
@@ -1020,6 +1052,7 @@ export default {
         });
       });
     },
+    // saves specifications locally
     async saveSpecificationsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['specifications'],'readwrite');
@@ -1042,6 +1075,7 @@ export default {
         });
       });
     },
+    // saves products locally
     async saveProductsLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['products'],'readwrite');
@@ -1054,6 +1088,7 @@ export default {
         });
       });
     },
+    // saves current category locally as authorized for the authenticated user
     async saveAuthorizedCategoryLocally(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['authorizedCategories'],'readwrite');
@@ -1064,6 +1099,7 @@ export default {
         store.put({key: this.$oidc.user.profile.sub, value: this.categoryId});
       });
     },
+    // deletes specifications locally (not all)
     async deleteSpecificationsLocally(key){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['specifications'],'readwrite');
@@ -1074,6 +1110,7 @@ export default {
         store.delete(key);
       });
     },
+    // event handler for Yjs observe()
     yOnChange: function(){
       this.needsUpdate = true; // for createCanvas()
       if(this.yMap.get('specifications')){
@@ -1083,28 +1120,21 @@ export default {
         this.products = this.yMap.get('products').toArray();
       }
     },
-    entriesForCategoryId: function(array, categoryId) {
-      var ans = new Array();
-      for(var i = 0; i < array.length; i++){
-        if(array[i].categoryId == categoryId){
-          ans.push(array[i]);
-        }
-      }
-      return ans;
-    },
+    // change specifications in Y.Doc
     yChangeSpecifications: function(){
       const ySpecifications = new Y.Array();
       ySpecifications.push(this.specifications);
       this.yMap.set('specifications', ySpecifications);
     },
+    // change products in Y.Doc
     yChangeProducts: function(){
       const yProducts = new Y.Array();
       yProducts.push(this.products);
       this.yMap.set('products', yProducts);
     },
+    // update requirements from ReqBaz
     async checkRequirements(){
       try {
-        // this.requirements = await this.getRequirementsLocally();
         let newRequirements = await PostService.getAllRequirements(this.categoryId);
         for(var i = 0; i < this.requirements.length; i++){
           var index1 = this.getElementIndexById(newRequirements, this.requirements[i].id);
@@ -1155,6 +1185,7 @@ export default {
       } catch (err) {
       }
     },
+    // alerts the user if he is not authenticated/authorized
     authAlert: function(){
       if(this.$oidc.isAuthenticated){
         this.error = "You are not authorized for this diagram. Only users assigned as developers in Requirements Bazaar can perform changes.";

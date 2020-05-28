@@ -1,4 +1,4 @@
-importScripts("/precache-manifest.4d6ff98dccd2a7f188dd504fa2c7ba95.js", "https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
+importScripts("/precache-manifest.ac52b4eb67359bad105a8b7e5fd2f323.js", "https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 if (workbox) {
   console.log(`Workbox loaded!`);
@@ -11,6 +11,7 @@ if (workbox) {
     plugins: [bgSyncPlugin],
   });
 
+  // routes handled by the background sync plugin
   const hoqURL = 'https://hoq-app-backend.herokuapp.com/api';
   workbox.routing.registerRoute(
     hoqURL + '/tech-specifications/',
@@ -34,6 +35,6 @@ if (workbox) {
   );
 
 } else {
-  console.log(`Boo! Workbox didn't load 😬`);
+  console.log(`Workbox didn't load.`);
 }
 

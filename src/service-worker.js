@@ -9,6 +9,7 @@ if (workbox) {
     plugins: [bgSyncPlugin],
   });
 
+  // routes handled by the background sync plugin
   const hoqURL = 'https://hoq-app-backend.herokuapp.com/api';
   workbox.routing.registerRoute(
     hoqURL + '/tech-specifications/',
@@ -32,5 +33,5 @@ if (workbox) {
   );
 
 } else {
-  console.log(`Boo! Workbox didn't load 😬`);
+  console.log(`Workbox didn't load.`);
 }

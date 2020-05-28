@@ -5,7 +5,9 @@ const reqURL = 'https://beta.requirements-bazaar.org/bazaar';
 
 class PostService {
 
-  // requirements bazaar
+  /* ReqBaz start */
+
+  // returns a single project
   static getProject(projectId){
     return new Promise(async (resolve, reject) => {
       try {
@@ -18,6 +20,7 @@ class PostService {
     })
   }
 
+  // returns all projects
   static getAllProjects(){
     return new Promise(async (resolve, reject) => {
       try {
@@ -30,6 +33,7 @@ class PostService {
     })
   }
 
+  // returns all categories of a project
   static getAllCategories(projectId){
     return new Promise(async (resolve, reject) => {
       try {
@@ -42,6 +46,7 @@ class PostService {
     })
   }
 
+  // returns authorized projects
   static getMyProjects(userId){
     return new Promise(async (resolve, reject) => {
       try {
@@ -65,6 +70,7 @@ class PostService {
     })
   }
 
+  // returns all requirements of a category
   static getAllRequirements(categoryId){
     return new Promise(async (resolve, reject) => {
       try {
@@ -79,6 +85,7 @@ class PostService {
     })
   }
 
+  // returns active user information
   static getActiveUser(user){
     return new Promise(async (resolve, reject) => {
       try {
@@ -93,6 +100,7 @@ class PostService {
     })
   }
 
+  // returns developers of a project
   static getProjectDevelopers(projectId){
     return new Promise(async (resolve, reject) => {
       try {
@@ -107,6 +115,7 @@ class PostService {
     })
   }
 
+  // returns developers of a category
   static getCategoryDevelopers(categoryId){
     return new Promise(async (resolve, reject) => {
       try {
@@ -121,13 +130,11 @@ class PostService {
     })
   }
 
-  // hoq app
-  static getMyHoq(){
-    // TODO
-  }
+  /* ReqBaz end */
 
-  // products
+  /* HoQ start */
 
+  // returns all products of a diagram
   static getAllProducts(categoryId){
     return new Promise(async (resolve, reject) => {
       try {
@@ -142,12 +149,12 @@ class PostService {
     })
   }
 
+  // edit product
   static changeProduct(product){
     return axios.put(hoqURL + '/products/', product);
   }
 
-  // specifications
-
+  // returns all specifications of a diagram
   static getAllSpecifications(categoryId){
     return new Promise(async (resolve, reject) => {
       try {
@@ -162,20 +169,24 @@ class PostService {
     })
   }
 
+  // create a specification
   static addSpecification(specification){
     return axios.post(hoqURL + '/tech-specifications/', specification);
   }
 
+  // edit a specification
   static changeSpecification(specification){
     return axios.put(hoqURL + '/tech-specifications/', specification);
   }
 
+  // delete a specification
   static deleteSpecification(specification){
     return axios.delete(hoqURL + '/tech-specifications/', {data: specification});
   }
 
-  // helpers
+  /* HoQ end */
 
+  // helpers
   static getElementIndexById(array, id){
     for(var i = 0; i < array.length; i++){
       if(array[i].id == id){

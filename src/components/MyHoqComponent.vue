@@ -67,30 +67,30 @@ export default {
   },
   async mounted(){
     document.title = "My Projects";
-    // get indexedDB
     this.idb = await this.getDb();
-    // ACTIVE USER
     if(this.$oidc.isAuthenticated){
+      // user authenticated
       try {
+        // obtain local user
         this.activeUser = await PostService.getActiveUser(this.$oidc.user);
       } catch (err) {
 
       }
       try {
+        // load live projects
         this.projects = await PostService.getMyProjects(this.activeUser.id);
-        this.saveProjectsLocaly();
       } catch (err){
+        // load local projects
         this.projects = await this.getProjectsLocaly();
       }
     }
-    // (MY)PROJECTS
-
+    // order projects
     this.projects.sort(function(a, b){
       if(a.name < b.name) { return -1; }
       if(a.name > b.name) { return 1; }
       return 0;
     });
-
+    // fix description, dates, is following, availability of link
     this.projects.forEach(project => {
       // description
       project.shortDescription = project.description;
@@ -111,13 +111,14 @@ export default {
       var lastUpdatedDate = new Date(project.lastUpdatedDate);
       project.created = helpers.isValidDate(creationDate) ? helpers.coolNumber(creationDate.getDate()) + "/" + helpers.coolNumber(creationDate.getMonth()) + "/" + creationDate.getFullYear() : "n/a";
       project.lastUpdated = helpers.isValidDate(lastUpdatedDate) ? helpers.coolNumber(lastUpdatedDate.getDate()) + "/" + helpers.coolNumber(lastUpdatedDate.getMonth()) + "/" + lastUpdatedDate.getFullYear() : "n/a";
-      // following
+      // is following
       project.following = project.following ? "Yes" : "No";
-      // active link
+      // availability of link
       project.active = project.numberOfCategories == 0 ? "not-active" : "";
     });
 
   },
+  /* pagination start */
   computed: {
     displayedProjects() {
       return this.paginate(this.projects);
@@ -147,6 +148,8 @@ export default {
       let to = (page * perPage);
       return  projects.slice(from, to);
     },
+    /* end pagination */
+    // returns indexedDB instance
     async getDb() {
       return new Promise((resolve, reject) => {
         let request = window.indexedDB.open('hoqStore', 1);
@@ -172,6 +175,7 @@ export default {
         };
       });
     },
+    // returns local projects
     async getProjectsLocaly(){
       return new Promise((resolve, reject) => {
         let trans = this.idb.transaction(['projects'],'readonly');
@@ -187,19 +191,6 @@ export default {
             cursor.continue();
           }
         };
-      });
-    },
-    async saveProjectsLocaly(){
-      return new Promise((resolve, reject) => {
-        let trans = this.idb.transaction(['projects'],'readwrite');
-        trans.oncomplete = e => {
-          resolve();
-        };
-        let store = trans.objectStore('projects');
-        store.clear();
-        this.projects.forEach(project => {
-          store.put({key: project.id, value: project});
-        });
       });
     }
   }
