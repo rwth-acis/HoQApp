@@ -3,7 +3,7 @@ import App from './App.vue'
 import router from './router'
 import './registerServiceWorker'
 import mainAuth from './auth';
-import 'vue-oidc-client/src/polyfill';
+import 'vue-oidc-client/polyfill';
 
 Vue.config.productionTip = false
 
