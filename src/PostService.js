@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const hoqURL = 'https://hoq-app-backend.herokuapp.com/api';
+const hoqURL = 'http://hoqapp-backend.docker-registry:5000/api';
 const reqURL = 'https://beta.requirements-bazaar.org/bazaar';
 
 class PostService {

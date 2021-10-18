@@ -10,7 +10,7 @@ if (workbox) {
   });
 
   // routes handled by the background sync plugin
-  const hoqURL = 'https://hoq-app-backend.herokuapp.com/api';
+  const hoqURL = 'http://hoqapp-backend.docker-registry:5000/api';
   workbox.routing.registerRoute(
     hoqURL + '/tech-specifications/',
     networkWithBackgroundSync,
