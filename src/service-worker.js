@@ -10,7 +10,7 @@ if (workbox) {
   });
 
   // routes handled by the background sync plugin
-  const hoqURL = 'http://hoqapp-backend.docker-registry:5000/api';
+  const hoqURL = 'https://hoq.tech4comp.dbis.rwth-aachen.de/api';
   workbox.routing.registerRoute(
     hoqURL + '/tech-specifications/',
     networkWithBackgroundSync,

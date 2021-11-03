@@ -44,12 +44,16 @@ spec:
   tls:
   - hosts:
     - <some-domain>
-    secretName: auth-tls
+    secretName: secret-tls
   rules:
   - host: <some-domain>
     http:
       paths:
-      - path:
+      - path: /api
+        backend:
+          serviceName: hoqapp-backend
+          servicePort: 5000
+      - path: /
         backend:
           serviceName: hoqapp
           servicePort: 8080
