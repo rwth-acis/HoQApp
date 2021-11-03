@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const hoqURL = 'https://hoq.tech4comp.dbis.rwth-aachen.de/api';
-const reqURL = 'https://beta.requirements-bazaar.org/bazaar';
+const reqURL = 'https://requirements-bazaar.org/bazaar';
 
 class PostService {
 
